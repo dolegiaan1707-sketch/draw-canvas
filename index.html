@@ -23,6 +23,13 @@
     background: #fff; color: #111; cursor: pointer;
   }
   button:active { background: #111; color: #fff; }
+  #saved { position: absolute; inset: 0; z-index: 1; background: #fff; }
+  #saved[hidden] { display: none; }
+  #saved img { width: 100%; height: 100%; display: block; }
+  #saved p {
+    position: absolute; top: 12px; left: 0; right: 0; margin: 0; text-align: center;
+    font: 14px/1.4 system-ui, sans-serif; color: #111;
+  }
 </style>
 </head>
 <body>
@@ -30,6 +37,11 @@
   <canvas id="c"></canvas>
   <button id="save" style="right:100px;">Save</button>
   <button id="clear">Erase</button>
+  <div id="saved" hidden>
+    <img alt="Your drawing">
+    <p>Right-click or long-press the image to save it</p>
+    <button id="close">Close</button>
+  </div>
 </div>
 <script src="background.js"></script>
 <script>
@@ -106,13 +118,23 @@
       const w = img.width * s, h = img.height * s;
       o.drawImage(img, (out.width - w) / 2, (out.height - h) / 2, w, h);
       o.drawImage(canvas, 0, 0);
+      const url = out.toDataURL('image/png');
+      // embeds like Notion sandbox the iframe without allow-downloads, so scripted downloads are silently blocked;
+      // show the image instead and let the browser's own "Save image" do it
+      if (window.self !== window.top) {
+        saved.querySelector('img').src = url;
+        saved.hidden = false;
+        return;
+      }
       const a = document.createElement('a');
-      a.href = out.toDataURL('image/png');
+      a.href = url;
       a.download = 'atilla.png';
       a.click();
     };
     img.src = BG;
   });
+  const saved = document.getElementById('saved');
+  document.getElementById('close').addEventListener('click', () => { saved.hidden = true; });
 </script>
 </body>
 </html>
